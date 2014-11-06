@@ -799,27 +799,27 @@
             /* new title css follows */
             @media screen and (max-device-width : 480px) {
               
-              #title {
+              .title {
                 padding: 50px 0 !important;
               }
               
-              #title section.text {
+              .title section.text {
                 width: 75% !important;
               }
               
-              #title h3 {
+              .title h3 {
                 width: 85% !important;
                 font: 800 32px/32px "open sans" !important;
                 margin: 0 0 16px 0 !important;
               }
               
-              #title h3 a {
+              .title h3 a {
                 font: 800 30px/30px "gentium book basic" !important;
                 text-transform: none !important;
                 color: #222;
               }
               
-              #title h6 {
+              .title h6 {
                 width: 85% !important;
                 font: 800 14px/14px "open sans" !important;
               }
@@ -831,17 +831,17 @@
               }
             }
 
-            #title {
+            .title {
               background: #ef4723;
               padding: 100px 0;
             }
 
-            #title section.text {
+            .title section.text {
               margin: 0 auto;
               width: 50%;
             }
 
-            #title h3 {
+            .title h3 {
               color: #222;
               font: 800 64px/64px "open sans";
               margin: 0 0 32px 0;
@@ -850,13 +850,13 @@
               width: 100%;
             }
 
-            #title h3 a {
+            .title h3 a {
               font: 800 60px/60px "gentium book basic";
               text-transform: none;
               color: #222;
             }
 
-            #title h6 {
+            .title h6 {
               border-top: 1px solid #222222;
               color: #222;
               font: 800 20px/20px "open sans";
@@ -865,7 +865,7 @@
               text-transform: uppercase;
             }
 
-            #title h6 a {
+            .title h6 a {
               color: #222;
               text-decoration: none;
               background: #ef4723;
@@ -970,7 +970,7 @@
 
                                     <h6 style="margin-top: 17px !important;"><span style='color: #666;font-weight: bold;padding-bottom: 20px;font-family: "freight-sans-pro","Myriad Pro","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;'>by <a href="//arjunsreedharan.org">Arjun Sreedharan</a></span></h6> -->
 
-                                    <div id="title" style="position: absolute;left: 0;right: 0;">
+                                    <div class="title" style="position: absolute;left: 0;right: 0;">
                                         <section class="text">
                                             <h3><a style="text-decoration: none !important;" href="{Permalink}">{Title}</a></h3>
                                             <h6 style="margin-top: 17px !important;"><span><a href="//arjunsreedharan.org">Arjun Sreedharan</a></span></h6>
@@ -1117,6 +1117,7 @@
                         <a href="//exploresion.org">exploresion.org</a>
                         <br/><br/><br/><br/><br/><br/><br/>--><br/>
                         <div id="recentHeading" class="title_height_filler" style="font-weight: bold">Recent Posts:</div>
+                        <br/>
                         <!-- the function below lists the articles in the blog -->
                         <script type="text/javascript">
                         (function(d,e){e=+e||10;
@@ -1222,7 +1223,7 @@
                 //init
                 jQuery(window).trigger('resize');
 
-                var title_height = jQuery("div#title").outerHeight();
+                var title_height = jQuery("div.title").outerHeight();
                 jQuery(".title_height_filler").css("padding-top",title_height+"px");
 
                 function cons() {
