@@ -155,7 +155,7 @@
                 //github
                 jQuery(".at4-follow-container").append($('<a class="aticon at-follow-btn" href="http://github.com/arjun024" target="_blank"><span class="at4-icon-fw" svc="github" svcid="arjun024" style="background-image: url(//static.tumblr.com/gltvynn/bpmmx8n21/github.png);background: none,url(//static.tumblr.com/gltvynn/bpmmx8n21/github.png);" title="Fork me on Github">Github</span></a>'));
                 var element = $('.at4-follow-outer').detach();
-                element.find("#at4-follow").css("position", "relative");
+                element.find("#at4-follow").css("position", "relative").css("z-index", "0");
                 $('#followCustomPosition').append(element);
             }
             addthis.layers({
@@ -352,7 +352,7 @@
             <div class="social_stuff">
                 <div class="widget">
                     <div class="twitter">
-                        <div class="stat"><a href="http://twitter.com/arjun024" title="Follow me on Twitter!" target="_blank" rel="nofollow"><span class="count">1971</span><span class="desc">Followers</span></a>
+                        <div class="stat"><a href="http://twitter.com/arjun024" title="Follow me on Twitter!" target="_blank" rel="nofollow"><span id="followers_count_arjun024" class="count">1971</span><span class="desc">Followers</span></a>
                         </div>
                     </div>
                     <div class="facebook">
@@ -388,6 +388,10 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
     <script type="text/javascript">
         jQuery(function() {
+            (function update_follower_count() {
+                $.get("https://facebookanalytics.herokuapp.com/twitter/followers.php", 
+                    function(x){$("#followers_count_arjun024").text(x);})
+            }());
             function about() {
                 $("#li_contact").removeClass("active");
                 $("#li_publickey").removeClass("active");
@@ -483,7 +487,7 @@
                 //github
                 jQuery(".at4-follow-container").append($('<a class="aticon at-follow-btn" href="http://github.com/arjun024" target="_blank"><span class="at4-icon-fw" svc="github" svcid="arjun024" style="background-image: url(//static.tumblr.com/gltvynn/bpmmx8n21/github.png);background: none,url(//static.tumblr.com/gltvynn/bpmmx8n21/github.png);" title="Fork me on Github">Github</span></a>'));
                 var element = $('.at4-follow-outer').detach();
-                element.find("#at4-follow").css("position", "relative");
+                element.find("#at4-follow").css("position", "relative").css("z-index", "0");
                 $('#followCustomPosition').append(element);
             };
             //kludge to get github icon
