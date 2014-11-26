@@ -1,0 +1,57 @@
+---
+layout: post
+title: Some jQuery bugs
+date: '2014-02-16T07:39:39+05:30'
+tags:
+- jquery
+- javascript
+- security
+- xss
+- coding
+- web
+- technology
+tumblr_url: http://arjunsreedharan.org/post/76835804269/some-jquery-bugs
+permalink: /post/76835804269/some-jquery-bugs
+---
+<p>jQuery is probably the best thing to have happened to an otherwise lousy language JavaScript. Just a couple of things I felt that doesn’t fare well with jQuery.</p>
+<h3>XSS&#160;!!!</h3>
+<p>Suppose you want to create an HTML element on the fly, you could use the <code>$()</code> method and pass to it a string that looks like HTML.<br/> If the string matches the regex for an HTML tag, then the string is internally passed to the <code> $.parseHTML()</code> method.</p>
+<p>So, I could create a <code>div</code> like:</p>
+<pre class="prettyprint lang-js">var $mainDiv = $("&lt;div class='main-div'&gt;&lt;/div&gt;");
+</pre>
+<p>What if a scripts is passed as an event attribute:</p>
+<pre class="prettyprint lang-js">$("&lt;img src=x onerror=alert(/hacked/)&gt;&lt;/img&gt;");<br/></pre>
+<p>Here&#8217;s what happens:</p>
+<p><img src="//files.arjunsreedharan.org/images/jquery_xss.png"/></p>
+<p>The <code>onerror</code> event was fired just when the node was created. I could pass any malicious script here instead of the alert, which would then be run immediately. Busted!!</p>
+<p>What if I give a valid url for the <code>src</code> attribute.<br/> A GET request is immediately sent to the url.</p>
+<p>What if you are logged in, and given the <code>src</code> path meets the cookies&#8217; restrictions,<br/> you are sending off your cookies as well.<br/>Busted again!!</p>
+
+<p> </p>
+
+<h3>The .data() method:</h3>
+<p>Now, I am going to attach some data to my body element:</p>
+<pre class="prettyprint lang-js">$("body").data({"my-fav": 7});
+</pre>
+<p>Let me try see if the data&#8217;s set.</p>
+<pre class="prettyprint lang-js">$("body").data("my-fav");
+&gt;&gt;7
+</pre>
+<p>Good.</p>
+<p>Well, <strong>7</strong> is no more my favorite number, I should change it to <strong>5</strong>.<br/> Here, I go:</p>
+<pre class="prettyprint lang-js">$("body").data("my-fav", 5);
+</pre>
+<p>Now let me check if it&#8217;s there:</p>
+<pre class="prettyprint lang-js">$("body").data("my-fav");
+&gt;&gt;7
+</pre>
+<p>Oops&#160;!! It hasn&#8217;t changed.</p>
+<p>Let me have a look at all the data the node has:</p>
+<pre class="prettyprint lang-js">$("body").data();
+ &gt;&gt;Object {my-fav: 7, myFav: 5}
+</pre>
+<p>If I remove the hyphen and cameCase the key:</p>
+<pre class="prettyprint lang-js">$("body").data("myFav");
+&gt;&gt;5
+</pre>
+<p>But <code>"myFav"</code> isn&#8217;t what I asked for&#160;!!</p>

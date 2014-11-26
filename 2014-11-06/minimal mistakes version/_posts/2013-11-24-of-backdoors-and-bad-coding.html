@@ -1,0 +1,42 @@
+---
+layout: post
+title: Of backdoors and bad coding
+date: '2013-11-24T12:41:00+05:30'
+tags:
+- backdoor
+- security
+- linux
+- router
+- d-link
+- C
+- technology
+tumblr_url: http://arjunsreedharan.org/post/67970413047/of-backdoors-and-bad-coding
+permalink: /post/67970413047/of-backdoors-and-bad-coding
+---
+<p>Does <span class="italic">"roodkcableoj28840ybtide"</span> mean anything to you? <br/>By the time you read through this article, you will understand that it is not gibberish exactly.</p>
+<h5><strong>The Tux</strong></h5>
+<p>Talking about backdoors, I’d like to write about an attempted planting of backdoor in the linux kernel. <br/>It was the year 2003 and linux kernel was still maintained on BitKeeper.</p>
+<p>The backdoor was just <a href="//lkml.indiana.edu/hypermail/linux/kernel/0311.0/0635.html" target="_blank">2 lines added</a> to the <span class="mycode">/kernel/exit.c</span> file of the Linux kernel&#8217;s source code. It was added of the <span class="mycode">sys_wait4()</span> system call. <br/><br/><span class="mycode">sys_wait4()</span> is a function a process could use to wait until some other process finishes.</p>
+<p>It was presented such that new lines of code were added to make <span class="mycode">sys_wait4()</span> return an error &#8220;EINVAL&#8221; (which is the error-code for invalid arguments) when the function was called in a way not permissible.<br/><br/>The added lines were as follows:</p>
+<pre class="prettyprint">if ((options == (__WCLONE|__WALL)) &amp;&amp; (current-&gt;uid = 0))
+	retval = -EINVAL;
+</pre>
+
+<p>On casually reading the above code, it appears to check if the caller of <span class="mycode">sys_wait4()</span> is using either of <span class="mycode">__WCLONE</span> or <span class="mycode">__WALL</span> flags, and if the user invoking it has the uid of 0 (ie. the root user) . If both conditions are true, the call is aborted with the given error code.</p>
+<p>If you re-examine the piece of code, you’ll find that instead of using the Equality-comparison operator <span class="mycode">==</span>, the assignment operator <span class="mycode">=</span> is used. The code should have been <span class="mycode">current-&gt;uid == 0</span> instead of <span class="mycode">current-&gt;uid = 0</span>.</p>
+<p>The above piece of code first compares <span class="mycode">options</span> to the expression <span class="mycode">(__WCLONE|__WALL)</span>.<br/>if true, it then evaluates <span class="mycode">(current-&gt;uid = 0)</span> which always evaluates to <span class="mycode">false</span> and also by virtue of the assignment operator sets the value of <span class="mycode">current-&gt;uid</span> to <span class="mycode">0</span>, giving root access to the system.</p>
+<p>So the if-statement always evaluates to false and the code is effectively:</p>
+<pre class="prettyprint">if ( options == ( __WCLONE | __WALL ) )
+	current-&gt;uid = 0;
+</pre>
+
+<p>So, the code never even checks if the user is root. If the condition for checking the flag succeeds, it grants the process root privileges, thereby making the function <span class="mycode">sys_wait4()</span> a backdoor to get unlimited privileges in a machine just by setting the right flags.</p>
+<p>Now that I think about this, I frequently make the accident of using the <span class="mycode">=</span> operator instead of the <span class="mycode">==</span> operator. Perhaps, I may have written some good backdoors by now. Who knows&#160;!!</p>
+<p><br/><br/></p>
+<h5><strong>D-Link Router</strong></h5>
+<p>Just a month ago, a security whiz named <a href="//www.devttys0.com/" target="_blank">Chris Heffner</a> <a href="//www.devttys0.com/2013/10/reverse-engineering-a-d-link-backdoor/" target="_blank">exposed</a> a backdoor contained in certain versions of D-Link router firmware. He found that the firmware performs an strcmp between the string pointer that represents the <span class="mycode">User-Agent</span> header of the HTTP request and the string <span class="mycode">xmlset_roodkcableoj28840ybtide</span>. If the strings match, the login-checking function call is skipped and the authentication-function returns <span class="mycode">1</span> (meaning authentication OK).</p>
+<p>This means that, if you set your browser’s <span class="mycode">User-Agent</span> to <span class="mycode">xmlset_roodkcableoj28840ybtide</span>, then you can access the web interface without any authentication ;)</p>
+<p>If you carefully look at the string that facilitates the backdoor entry, is it’s basically <span class="mycode">xmlset_</span> prepended with the following written backwards&#160;:<br/><br/><span class="italic">"Edit by 04882 Joel Backdoor"</span></p>
+<p>Did I not tell you, you would get to know what roodkcableoj28840ybtide means&#160;!!!</p>
+<p>Hardwired passwords were a design blunder three decades ago, but some Joel guy had to go home early from office and he decided to make life convenient.</p>
+<p>PS: Hot News - <a href="//vr-zone.com/articles/nsa-asked-linus-torvalds-inject-backdoors-linuxgnu/64174.html" target="_blank">United States NSA asked Linus Torvalds to inject backdoors into Linux/GNU</a><br/>PS 2: It was never brought out who was behind the 2003 attempt to plant a backdoor in the linux kernel.</p>

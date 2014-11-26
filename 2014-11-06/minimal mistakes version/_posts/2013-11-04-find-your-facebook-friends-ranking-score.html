@@ -1,0 +1,66 @@
+---
+layout: post
+title: Find your Facebook Friends Ranking Score !!
+date: '2013-11-04T02:20:00+05:30'
+tags:
+- javascript
+- facebook
+- ranking
+tumblr_url: http://arjunsreedharan.org/post/65979958297/find-your-facebook-friends-ranking-score
+permalink: /post/65979958297/find-your-facebook-friends-ranking-score
+---
+<p>Hey folks,<br/>I just wrote a tiny script to print Facebook Friends Ranking Score in a table.</p>
+<p><strong>(UPDATE [June 5, 2014 and Dec 18, 2013]: Code and Link updated since Facebook changed some of their code</strong><strong>)</strong></p>
+<p>Drag and drop the following link to your browser&#8217;s bookmarks bar:</p>
+<p><a href="javascript:function%20creator(e,t,n)%7Bvar%20r=document.createElement(n);r.cellspacing=%223%22;var%20i=document.createTextNode(t);r.appendChild(i);e.appendChild(r)%7Dfunction%20displayData(e)%7Bvar%20t=document.createElement(%22table%22);var%20n=document.createElement(%22thead%22);t.appendChild(n);var%20r=document.createElement(%22tr%22);creator(r,%22Name%22,%22th%22);creator(r,%22Type%22,%22th%22);creator(r,%22Score%22,%22th%22);n.appendChild(r);var%20s=document.createElement(%22tbody%22);t.appendChild(s);for(i=0;i&lt;e.length;i++)%7Bvar%20o=e%5Bi%5D.type;var%20r=document.createElement(%22tr%22);creator(r,e%5Bi%5D%5B%22text%22%5D,%22td%22);creator(r,Object.keys(e%5Bi%5D%5B%22grammar_costs%22%5D)%5B0%5D.slice(0,-1).substring(1),%22td%22);creator(r,e%5Bi%5D%5B%22grammar_costs%22%5D%5BObject.keys(e%5Bi%5D%5B%22grammar_costs%22%5D)%5B0%5D%5D,%22td%22);s.appendChild(r)%7Ddocument.body.innerHTML=%22%22;document.body.appendChild(t)%7Did=requireDynamic%28%22CurrentUserInitialData%22%29%5B%22USER_ID%22%5D%7C%7CrequireDynamic%28%22CurrentUserInitialData%22%29%5B%22ACCOUNT_ID%22%5D%7C%7CrequireDynamic%28%22Env%22%29.user%7C%7CrequireDynamic%28%22CurrentUserInitialData%22%29%5B%22id%22%5D;url=%22//www.facebook.com/ajax/typeahead/search/facebar/bootstrap/?viewer=%22+id+%22&amp;__a=1%22;x=new%20XMLHttpRequest;x.onreadystatechange=function()%7Bif(x.readyState==4&amp;&amp;x.status==200)%7Bsrr=JSON.parse(x.responseText.substring(9)).payload.entries;displayData(srr)%7D%7D;x.open(%22GET%22,url,true);x.send()" target="_blank">FB Friends Ranking</a></p>
+<p>Log in to your facebook and then click on the bookmark. </p>
+
+<p>You should see your Friends&#8217; Rating Score. Smaller the friend&#8217;s score, higher the rank.<br/><br/></p>
+<p>It also shows scores for not only users; also for groups, pages etc and your ranking factors like high-school, college, employer, topics etc.</p>
+<p>Surprised that facebook knows who you stalk?, Sure you are not&#160;!! :)</p>
+
+<p></p>
+<p><strong>The Code:</strong></p>
+<pre class="prettyprint">function creator(o, data, node){
+	var content = document.createElement(node);
+	content.cellspacing = "3"
+	var cell = document.createTextNode(data);
+	content.appendChild(cell);
+	o.appendChild(content);
+}
+function displayData(arr){
+	var table = document.createElement('table');
+	var thead = document.createElement('thead');
+	table.appendChild(thead);
+	var row = document.createElement('tr');
+	creator(row, 'Name', 'th');
+	creator(row, 'Type', 'th');
+	creator(row, 'Score', 'th');
+	thead.appendChild(row);
+	var tbody = document.createElement('tbody');
+	table.appendChild(tbody);
+	for(i=0; i &lt; arr.length; i++){
+		var type = arr[i].type;
+		var row = document.createElement('tr');
+		creator(row, arr[i]["text"], 'td');
+		creator(row, Object.keys(arr[i]["grammar_costs"])[0].slice(0,-1).substring(1), 'td');
+		creator(row, arr[i]["grammar_costs"][Object.keys(arr[i]["grammar_costs"])[0]], 'td');
+		tbody.appendChild(row);
+	}
+	document.body.innerHTML = "";
+	document.body.appendChild(table);
+}
+
+id = <span>requireDynamic("CurrentUserInitialData")["USER_ID"] || requireDynamic("CurrentUserInitialData")["ACCOUNT_ID"] || requireDynamic("Env").user || requireDynamic("CurrentUserInitialData")["id"]</span>;
+url = "//www.facebook.com/ajax/typeahead/search/facebar/bootstrap/?viewer=" + id + "&amp;__a=1";
+x = new XMLHttpRequest();
+x.onreadystatechange=function(){
+  if (x.readyState==4 &amp;&amp; x .status==200){
+    srr=JSON.parse(x.responseText.substring(9)).payload.entries;
+    displayData(srr);
+  }
+}
+x.open("GET",url,true);
+x.send();
+</pre>
+<p><strong><br/><br/>On Github: </strong><a href="//github.com/arjun024/facebook-friends-ranking-score" target="_blank">github.com/arjun024/facebook-friends-ranking-score</a></p>

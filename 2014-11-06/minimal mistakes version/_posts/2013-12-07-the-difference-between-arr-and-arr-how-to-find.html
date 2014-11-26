@@ -1,0 +1,71 @@
+---
+layout: post
+title: The difference between arr and &arr - How to find size of an array in C without
+  sizeof
+date: '2013-12-07T16:28:00+05:30'
+tags:
+- C
+- programming
+- array
+- pointer
+- memory allocation
+- technology
+tumblr_url: http://arjunsreedharan.org/post/69303442896/the-difference-between-arr-and-arr-how-to-find
+permalink: /post/69303442896/the-difference-between-arr-and-arr-how-to-find
+---
+<p>Hey folks, Long time no C.</p>
+<p>Generally in C, this is how we find the length of an array <code>arr</code>&#160;:</p>
+
+<pre class="prettyprint">int n = sizeof(arr) / sizeof(arr[0]);
+</pre>
+<p><br/>Here we take the size of the array in bytes; then divide it by the size of an individual array element.</p>
+<p><br/>Let&#8217;s get rid of <code>sizeof</code> and make things cool.</p>
+<p><br/>Ever thought what&#8217;s the difference between <code>arr</code> and <code>&amp;arr</code>?</p>
+<p><br/>Let&#8217;s check that out by printing the memory addresses of both the pointers:<br/><img alt="image" src="http://media.tumblr.com/9d0c2c3c50bf19b9e7cbe0dee60e57da/tumblr_inline_mxgenbGHCE1rivrqc.png"/></p>
+
+<p>and here&#8217;s the output:<br/><img alt="image" src="http://media.tumblr.com/f7c201309ea0ef91b9e3cfcf6352a4db/tumblr_inline_mxgeopP4YL1rivrqc.png"/></p>
+
+<p></p>
+<p>As you can see in the output, both <code>arr</code> and <code>&amp;arr</code> point to the exact same memory location <strong>0x244fdc4</strong>.</p>
+
+<p><br/><br/></p>
+<p>Now, let&#8217;s increment both the pointers by 1 and check their memory address.</p>
+<p><br/>Here&#8217;s the code to check for the memory address of <code>arr + 1</code> and <code>&amp;arr + 1</code>&#160;:</p>
+<p><img alt="image" src="http://media.tumblr.com/5a3f386511f1cd8de2eaed10f8eb89e4/tumblr_inline_mxgeqloPk31rivrqc.png"/></p>
+
+<p></p>
+<p>and the output:<br/><img alt="image" src="http://media.tumblr.com/0a82cd074cb63da22fdc74d371712c1d/tumblr_inline_mxgeriaKHm1rivrqc.png"/></p>
+
+<p></p>
+<p><br/>We find that:</p>
+<p><br/><strong>(arr + 1)</strong> points to<strong> 0x244fdc8</strong> which is 4 bytes away from <strong>arr</strong> which points to <strong>0x244fdc4</strong>. <br/> Since an <code>int</code> takes up 4 bytes, <strong>(arr + 1) points to the second element of the array</strong>.</p>
+<p><br/><strong>(&amp;arr + 1)</strong> points to <strong>0x244fdd8</strong> which is 20 bytes away from <strong>arr</strong> which points to<strong> 0x244fdc4</strong>.<br/> (0x244fdd8 - 0x244fdc4 = 14 in hex = 20 in decimal)<br/><br/> Taking the size of <code>int</code> into consideration, <strong>(&amp;arr + 1)</strong> is 5 int-sizes away from the beginning of the array. 5 also happens to be the size of the array.<br/> So, <strong>(&amp;arr + 1) points to the memory address after the end of the array</strong>.</p>
+<p>Now, we can deduce that while <strong>arr</strong> and <strong>&amp;arr</strong> points to the same location, they are different in type.</p>
+<p><strong>arr</strong> has the type <strong>int *</strong>, where as <strong>&amp;arr</strong> has the type <strong>int (*)[</strong><em>size</em><strong>]</strong>.<br/><br/><strong>&amp;arr points to the entire array where as arr points to the first element of the array</strong>.</p>
+<p><img alt="image" src="http://media.tumblr.com/d5d463dd1502ff5f8cc31418e77ca0cd/tumblr_inline_mxgewyhrsi1rivrqc.png"/></p>
+
+<p></p>
+<p><br/>This brings us to something useful - length of the array.</p>
+<p><br/>* <strong>(&amp;arr + 1)</strong> gives us the address after the end of the array and <strong>arr</strong> that of the first element of the array.<br/>Subtracting latter from former would thus give the length of the array.</p>
+<pre class="prettyprint">int n = *(&amp;arr + 1) - arr;
+</pre>
+<p><br/>We can simplify this using array indexes (since x[1] == *(x+1) ):</p>
+<pre class="prettyprint">int n = (&amp;arr)[1] - arr;
+</pre>
+<p><br/><br/></p>
+<p><strong>PS:</strong><br/>This works only for arrays, not when you take pointers (as in char *str for strings).</p>
+
+<pre class="prettyprint">void reverseStr(char *str){ 
+  //wrong
+  int strlength = (&amp;str)[1] - str;
+}
+</pre>
+<p></p>
+<p>In this case <code>&amp;str</code> is a pointer that points to the pointer <code>str</code>. Remember, in C arrays are not pointers.</p>
+
+<p></p>
+
+<p><strong>Addendum:</strong></p>
+<p>I&#8217;d like to quote a question-answer i found on reddit / SO regarding the same topic.</p>
+<p><strong>Q</strong>: <span>Accessing the first address after an array seems to be undefined behavior. F</span><span>or example: if your array located at the end of an address-space, the referencing address causing an overflow and your resulting size could be anything. Then how could you access `(&amp;arr)[1]`&#160;?</span></p>
+<p><span><strong>A</strong>: <span>C doesn&#8217;t allow </span><strong>access</strong><span> to memory beyond the end of the array. It does, however, allow a pointer to point at one element beyond the end of the array. The distinction is important.</span></span></p>

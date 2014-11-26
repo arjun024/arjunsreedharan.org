@@ -1,0 +1,51 @@
+---
+layout: post
+title: Simple and free file storage for your website using Dropbox and Google App
+  Engine
+date: '2014-01-15T13:38:00+05:30'
+tags:
+- python
+- dropbox
+- google app engine
+- website
+- hosting
+- github
+- domain
+- storage
+- technology
+tumblr_url: http://arjunsreedharan.org/post/73426997938/simple-and-free-file-storage-for-your-website
+permalink: /post/73426997938/simple-and-free-file-storage-for-your-website
+---
+<p>Hi folks,</p>
+<p>I wanted to host some files on my this website which i host on tumblr.<br/>So, i decided to put them on dropbox and write a simple python app hosted on google app engine that serves them.<br/> Finally, pointed one of my subdomains to the python app - so i can host stuff in my domain like <a href="//files.arjunsreedharan.org/test" target="_blank">files.arjunsreedharan.org/test</a><br/><br/> I have put the code on Github: <a href="//github.com/arjun024/pystorage" target="_blank">arjun024/pystorage</a><br/><br/> To use for your website, all your need to do is specify your dropbox user-id and the name of the folder you wish to store your content.<br/> Read on.</p>
+<h3><a class="anchor" name="what-services-we-use-here"></a>What services we use here</h3>
+<p><img src="//files.arjunsreedharan.org/images/gaedb.jpg"/></p>
+<ul><li><a href="//dropbox.com" target="_blank">Dropbox</a> - to store your files.</li>
+<li><a href="//appengine.google.com" target="_blank">Google App Engine</a> - python runtime where we implement this handler code.<br/>
+</li>
+</ul><h3><a class="anchor" name="how-we-build-our-environment"></a>How we build our environment</h3>
+<h4><a class="anchor" id="dropbox" name="dropbox"></a><strong>Dropbox</strong></h4>
+<ul><li>Create a dropbox account.</li>
+<li>Create a folder inside your &#8220;Public&#8221; directory.</li>
+<li>Create a test file inside that folder, Right-click and view its public url and find out your user-id.<br/> (public url will be of the syntax: <em>dl.dropboxusercontent.com/u/&lt;USERID&gt;/&lt;YOURFOLDER&gt;/testfile</em>)</li>
+<li>Input user-id and folder-name as variable values in <code>index.py</code>.</li>
+</ul><pre class="prettyprint lang-py">DROPBOX_USERID = "&lt;USERID&gt;"
+DROPBOX_FOLDER = "&lt;YOURFOLDER&gt;"
+</pre>
+<h4><a class="anchor" name="google-app-engine"></a><strong>Google App Engine</strong></h4>
+<ul><li>Create a Google App Engine account.</li>
+<li>register a unique app-id.</li>
+<li>now your application will run at &lt;app-id&gt;.appspot.com</li>
+<li>Dowload <a href="//python.org/download/releases/2.7.4" target="_blank">Python</a> and <a href="//googleappengine.googlecode.com/files/GoogleAppEngine-1.8.9.msi" target="_blank">Google App Engine SDK</a></li>
+<li>Download source files of pystorage project from github. (<a href="//github.com/arjun024/pystorage/archive/master.zip" target="_blank">here</a>)</li>
+<li>Select &#8220;src&#8221; folder as the project folder in the GAE SDK.</li>
+<li>Deploy it to App Engine.</li>
+</ul><h3><a class="anchor" id="example" name="example"></a>Example</h3>
+<p><a href="http://py-storage.appspot.com/test" target="_blank">http://py-storage.appspot.com/test</a></p>
+<p>This serves the file &#8216;test&#8217; that is located in the specified folder of my Dropbox&#8217;s Public directory.</p>
+<h3><a class="anchor" name="access-the-files-under-your-own-domain"></a>Access the files under your own domain</h3>
+<ul><li>Let&#8217;s say you want to acces the test file as &lt;files.yourwebsite.com&gt;/test</li>
+<li>Login to your App Engine, set custom domain for your app as &lt;files.yourwebsite.com&gt;</li>
+<li>In your website&#8217;s DNS settings: point CNAME record for &lt;files.yourwebsite.com&gt; to ghs.googlehosted.com</li>
+<li>You&#8217;re done.</li>
+</ul>

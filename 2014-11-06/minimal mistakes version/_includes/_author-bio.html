@@ -1,0 +1,52 @@
+{% if page.author %}
+  {% assign author = site.data.authors[page.author] %}{% else %}{% assign author = site.owner %}
+{% endif %}
+
+
+
+<!--<div id="interestingThings" class="title_height_filler" style="font-weight: bold;padding-top: 500px;">Interesting Things:</div>
+<a href="//exploresion.org">exploresion.org</a>
+<br/><br/><br/><br/><br/><br/><br/>-->
+<br/>
+
+<h3><a href="{{ site.url}}/posts/">Recent Posts</a></h3>
+    {% for post in site.posts limit:25 %}    
+    <article>
+        <h2><a href="{{ site.url }}{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></h2>
+    </article>
+    {% endfor %}
+
+
+<!-- ads -->
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- org.custom1 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:120px;height:600px"
+     data-ad-client="ca-pub-5046754493364025"
+     data-ad-slot="9421349993"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+<br/>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- org.custom2 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:120px;height:600px"
+     data-ad-client="ca-pub-5046754493364025"
+     data-ad-slot="1445267994"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<br/>
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- org.custom3 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:120px;height:600px"
+     data-ad-client="ca-pub-5046754493364025"
+     data-ad-slot="4398734390"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>

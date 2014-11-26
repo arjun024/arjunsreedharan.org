@@ -1,0 +1,20 @@
+---
+layout: post
+title: Simple php wrapper for OAuth requests
+date: '2014-02-24T05:36:56+05:30'
+tags:
+- php
+- OAuth
+- twitter
+- technology
+tumblr_url: http://arjunsreedharan.org/post/77691933831/simple-php-wrapper-for-oauth-requests
+permalink: /post/77691933831/simple-php-wrapper-for-oauth-requests
+---
+<p>Hi, i wrote a simple php wrapper for making OAuth requests to a url.</p>
+<p>Here&#8217;s the <a href="//github.com/arjun024/oauthRequest/" target="_blank">code on github</a>.</p>
+<p>Include the library file in your code first:</p>
+<pre class="prettyprint lang-php">require('oauthRequest.php');
+</pre>
+<p>Now, you can use the oauthRequest method which returns the response text:</p>
+<pre class="prettyprint lang-php">$output = oauthRequest(&lt;url&gt;);
+</pre>

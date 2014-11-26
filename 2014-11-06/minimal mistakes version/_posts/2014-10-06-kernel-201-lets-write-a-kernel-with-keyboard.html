@@ -1,0 +1,198 @@
+---
+layout: post
+title: Kernel 201 - Let’s write a Kernel with keyboard and screen support
+date: '2014-10-06T22:26:33+05:30'
+tags:
+- kernel
+- operating system
+- c
+- asm
+- assembly
+- x86
+- cpu
+- booting
+- programming
+- bootloader
+- grub
+- nasm
+- ld
+- gcc
+- keyboard
+- i/o
+- interrupt
+- pic
+- technology
+tumblr_url: http://arjunsreedharan.org/post/99370248137/kernel-201-lets-write-a-kernel-with-keyboard
+permalink: /post/99370248137/kernel-201-lets-write-a-kernel-with-keyboard
+---
+<p>In my previous article <a href="//arjunsreedharan.org/post/82710718100/kernel-101-lets-write-a-kernel" target="_blank"> Kernel 101 - Let’s write a Kernel</a>, i wrote how we can build a rudimentary x86 kernel that boots up using GRUB, runs in protected mode and prints a string on the screen.</p>
+<p>Today, we will extend that kernel to include keyboard driver that can read the characters a-z and 0-9 from the keyboard and print them on screen.</p>
+
+<p>Source code used for this article is available at my <a href="//github.com/arjun024/mkeykernel" target="_blank">Github repository - mkeykernel</a></p>
+
+<p><img alt="image" src="//31.media.tumblr.com/5b6c5c57e77c84137d96c97aa3c09c22/tumblr_inline_ncyxrtFyJm1rivrqc.jpg"/></p>
+
+<p>We communicate with I/O devices using <strong>I/O ports</strong>. These ports are just specific address on the x86&#8217;s I/O bus, nothing more. The read/write operations from these ports are accomplished using specific instructions built into the processor.</p>
+<p><br/><br/></p>
+<p><strong class="post-heading">Reading from and Writing to ports</strong></p>
+<pre class="prettyprint lang-asm">read_port:
+	mov edx, [esp + 4]
+	in al, dx	
+	ret
+
+write_port:
+	mov   edx, [esp + 4]    
+	mov   al, [esp + 4 + 4]  
+	out   dx, al  
+	ret
+</pre>
+<p>I/O ports are accessed using the <code>in</code> and <code>out</code> instructions that are part of the x86 instruction set.</p>
+<p>In <code>read_port</code>, the port number is taken as argument. When compiler calls your function, it pushes all its arguments onto the stack. The argument is copied to the register <code>edx</code> using the stack pointer. The register <code>dx</code> is the lower 16 bits of <code>edx</code>. The <code>in</code> instruction here reads the port whose number is given by <code>dx</code> and puts the result in <code>al</code>. Register <code>al</code> is the lower 8 bits of <code>eax</code>. If you remember your college lessons, function return values are received through the <code>eax</code> register. Thus <code>read_port</code> lets us read I/O ports.</p>
+<p><code>write_port</code> is very similar. Here we take 2 arguments: port number and the data to be written. The <code>out</code> instruction writes the data to the port.</p>
+<p><br/><br/></p>
+<p><strong class="post-heading">Interrupts</strong></p>
+<p>Now, before we go ahead with writing any device driver; we need to understand how the processor gets to know that the device has performed an event.</p>
+<p>The easiest solution is <strong>polling</strong> - to keep checking the status of the device forever. This, for obvious reasons is not efficient and practical. This is where <strong>interrupts</strong> come into the picture. An interrupt is a signal sent to the processor by the hardware or software indicating an event. With interrupts, we can avoid polling and act only when the specific interrupt we are interested in is triggered.</p>
+<p>A device or a chip called <strong>Programmable Interrupt Controller (PIC)</strong> is responsible for x86 being an interrupt driven architecture. It manages hardware interrupts and sends them to the appropriate system interrupt.</p>
+<p>When certain actions are performed on a hardware device, it sends a pulse called <strong>Interrupt Request (IRQ)</strong> along its specific interrupt line to the PIC chip. The PIC then translates the received IRQ into a system interrupt, and sends a message to interrupt the CPU from whatever it is doing. It is then the kernel&#8217;s job to handle these interrupts.</p>
+<p>Without a PIC, we would have to poll all the devices in the system to see if an event has occurred in any of them.</p>
+<p>Let&#8217;s take the case of a keyboard. The keyboard works through the I/O ports <code>0x60</code> and <code>0x64</code>. Port <code>0x60</code> gives the data (pressed key) and port <code>0x64</code> gives the status. However, you have to know exactly when to read these ports.</p>
+<p>Interrupts come quite handy here. When a key is pressed, the keyboard gives a signal to the PIC along its interrupt line IRQ1. The PIC has an <code>offset</code> value stored during initialization of the PIC. It adds the input line number to this <code>offset</code> to form the <strong>Interrupt number</strong>. Then the processor looks up a certain data structure called the <strong>Interrupt Descriptor Table (IDT)</strong> to give the interrupt handler address corresponding to the interrupt number.</p>
+<p>Code at this address is then run, which handles the event. <br/><br/></p>
+<p><strong class="post-heading">Setting up the IDT</strong></p>
+<pre class="prettyprint lang-c">void idt_init(void)
+{
+	unsigned long keyboard_address;
+	unsigned long idt_address;
+	unsigned long idt_ptr[2];
+
+	struct IDT_entry{
+	   unsigned short int offset_lowerbits;
+	   unsigned short int selector;
+	   unsigned char zero;
+	   unsigned char type_attr;
+	   unsigned short int offset_higherbits;
+	};
+
+	struct IDT_entry IDT[IDT_SIZE];
+
+	/* populate IDT entry of keyboard's interrupt */
+	keyboard_address = (unsigned long)keyboard_handler; 
+	IDT[0x21].offset_lowerbits = keyboard_address &amp; 0xffff;
+	IDT[0x21].selector = 0x08; /* KERNEL_CODE_SEGMENT_OFFSET */
+	IDT[0x21].zero = 0;
+	IDT[0x21].type_attr = 0x8e; /* INTERRUPT_GATE */
+	IDT[0x21].offset_higherbits = (keyboard_address &amp; 0xffff0000) &gt;&gt; 16;
+	
+
+	/*     Ports
+	*	 PIC1	PIC2
+	*Command 0x20	0xA0
+	*Data	 0x21	0xA1
+	*/
+
+	/* ICW1 - begin initialization */
+	write_port(0x20 , 0x11);
+	write_port(0xA0 , 0x11);
+
+	/* ICW2 - remap offset address of IDT */
+	/*
+	* In x86 protected mode, we have to remap the PICs beyond 0x20 because
+	* Intel have designated the first 32 interrupts as "reserved" for cpu exceptions
+	*/
+	write_port(0x21 , 0x20);
+	write_port(0xA1 , 0x28);
+
+	/* ICW3 - setup cascading */
+	write_port(0x21 , 0x00);  
+	write_port(0xA1 , 0x00);  
+
+	/* ICW4 - environment info */
+	write_port(0x21 , 0x01);
+	write_port(0xA1 , 0x01);
+	/* Initialization finished */
+
+	/* mask interrupts */
+	write_port(0x21 , 0xff);
+	write_port(0xA1 , 0xff);
+
+	/* fill the IDT descriptor */
+	idt_address = (unsigned long)IDT ;
+	idt_ptr[0] = (sizeof (struct IDT_entry) * IDT_SIZE) + ((idt_address &amp; 0xffff) &lt;&lt; 16);
+	idt_ptr[1] = idt_address &gt;&gt; 16 ;
+
+	load_idt(idt_ptr);
+}
+</pre>
+<p>We implement IDT as an array comprising structures <code>IDT_entry</code>. We&#8217;ll discuss how the keyboard interrupt is mapped to its handler later in the article. First, let&#8217;s see how the PICs work.</p>
+<p>Modern x86 systems have 2 PIC chips each having <strong>8 input lines</strong>. Let&#8217;s call them PIC1 and PIC2. PIC1 receives IRQ0 to IRQ7 and PIC2 receives IRQ8 to IRQ15. PIC1 uses port <code>0x20</code> for Command and <code>0x21</code> for Data. PIC2 uses port <code>0xA0</code> for Command and <code>0xA1</code> for Data.</p>
+<p>The PICs are initialized using 8-bit command words known as <strong>Initialization command words (ICW)</strong>. See <a href="//stanislavs.org/helppc/8259.html" target="_blank">this link</a> for the exact bit-by-bit syntax of these commands.</p>
+<p>In protected mode, the first command you will need to give the two PICs is the initialize command <strong>ICW1</strong> (<code>0x11</code>). This command makes the PIC wait for 3 more initialization words on the data port.</p>
+
+<p>These commands tell the PICs about:</p>
+<p class="indent5">* Its vector offset. (ICW2)<br/> * How the PICs wired as master/slaves. (ICW3)<br/> * Gives additional information about the environment. (ICW4)</p>
+<p>The second initialization command is the ICW2, written to the data ports of each PIC. It sets the PIC&#8217;s offset value. This is the value to which we add the input line number to form the Interrupt number.</p>
+<p>PICs allow cascading of their outputs to inputs between each other. This is setup using ICW3 and each bit represents cascading status for the corresponding IRQ. For now, we won&#8217;t use cascading and set all to zeroes.</p>
+<p>ICW4 sets the additional enviromental parameters. We will just set the lower most bit to tell the PICs we are running in the 80x86 mode.</p>
+<p>Tang ta dang&#160;!! PICs are now initialized.</p>
+<p><br/><br/></p>
+<p>Each PIC has an internal 8 bit register named <strong>Interrupt Mask Register (IMR)</strong>. This register stores a bitmap of the IRQ lines going into the PIC. When a bit is set, the PIC ignores the request. This means we can <span class="color-green">enable</span> and <span class="color-red">disable</span> the n<sup class="valign-super">th</sup> IRQ line by making the value of the n<sup class="valign-super">th</sup> bit in the IMR as <span class="color-green">0</span> and <span class="color-red">1</span> respectively. Reading from the data port returns value in the IMR register, and writing to it sets the register. Here in our code, after initializing the PICs; we set all bits to 1 thereby disabling all IRQ lines. We will later enable the line corresponding to keyboard interrupt. As of now, let&#8217;s disable all the interrupts&#160;!!</p>
+<p>Now if IRQ lines are enabled, our PICs can receive signals via IRQ lines and convert them to interrupt number by adding with the offset. Now, we need to populate the IDT such that the interrupt number for the keyboard is mapped to the address of the keyboard handler function we will write.</p>
+<p>Which interrupt number should the keyboard handler address be mapped against in the IDT?</p>
+
+<p class="indent5">The keyboard uses IRQ<strong>1</strong>. This is the input line 1 of PIC1. We have initialized PIC1 to an offset <code>0x20</code> (see ICW2). To find interrupt number, add <code>1</code> <strong>+</strong> <code>0x20</code> ie. <code>0x21</code>. So, keyboard handler address has to be mapped against interrupt <code>0x21</code> in the IDT.</p>
+<p>So, the next task is to populate the IDT for the interrupt <code>0x21</code>.<br/>We will map this interrupt to a function <code>keyboard_handler</code> which we will write in our assembly file.</p>
+<p>Each IDT entry consist of 64 bits. In the IDT entry for the interrupt, we do not store the entire address of the handler function together. We split it into 2 parts of 16 bits. The lower bits are stored in the first 16 bits of the IDT entry and the higher 16 bits are stored in the last 16 bits of the IDT entry. This is done to maintain compatibility with the 286. You can see Intel pulls shrewd kludges like these in so many places&#160;!!</p>
+
+<p>In the IDT entry, we also have to set the type - that this is done to trap an interrupt. We also need to give the kernel code segment offset. GRUB bootloader sets up a <a href="//en.wikipedia.org/wiki/Global_Descriptor_Table" target="_blank">GDT</a> for us. Each GDT entry is 8 bytes long, and the kernel code descriptor is the second segment; so its offset is <code>0x08</code> (More on this would be too much for this article). Interrupt gate is represented by <code>0x8e</code>. The remaining 8 bits in the middle has to be filled with all zeroes. In this way, we have filled the IDT entry corresponding to the keyboard&#8217;s interrupt.</p>
+
+<p>Once the required mappings are done in the IDT, we got to tell the CPU where the IDT is located.<br/>This is done via the <code>lidt</code> assembly instruction. <code>lidt</code> take one operand. The operand must be a pointer to a descriptor structure that describes the IDT.</p>
+<p>The descriptor is quite straight forward. It contains the size of IDT in bytes and its address. I have used an array to pack the values. You may also populate it using a struct.</p>
+<p>We have the pointer in the variable <code>idt_ptr</code> and then pass it on to <code>lidt</code> using the function <code>load_idt()</code>.</p>
+<pre class="prettyprint lang-asm">load_idt:
+	mov edx, [esp + 4]
+	lidt [edx]
+	sti
+	ret
+</pre>
+<p>Additionally, <code>load_idt()</code> function turns the interrupts on using <code>sti</code> instruction.</p>
+<p>Once the IDT is set up and loaded, we can turn on keyboard&#8217;s IRQ line using the interrupt mask we discussed earlier.</p>
+<pre class="prettyprint lang-c">void kb_init(void)
+{
+	/* 0xFD is 11111101 - enables only IRQ1 (keyboard)*/
+	write_port(0x21 , 0xFD);
+}
+</pre>
+<p><br/><br/></p>
+<p><strong class="post-heading">Keyboard interrupt handling function</strong></p>
+<p>Well, now we have successfully mapped keyboard interrupts to the function <code>keyboard_handler</code> via IDT entry for interrupt <code>0x21</code>.<br/>So, everytime you press a key on your keyboard you can be sure this function is called.</p>
+<pre class="prettyprint lang-asm">keyboard_handler:                 
+	call    keyboard_handler_main
+	iretd
+</pre>
+<p>This function just calls another function written in C and returns using the <code>iret</code> class of instructions. We could have written our entire interrupt handling process here, however it&#8217;s much easier to write code in C than in assembly - so we take it there. <br/><code>iret</code>/<code>iretd</code> should be used instead of <code>ret</code> when returning control from an interrupt handler to a program that was interrupted by an interrupt. These class of instructions pop the flags register that was pushed into the stack when the interrupt call was made.</p>
+<pre class="prettyprint lang-c">void keyboard_handler_main(void) {
+	unsigned char status;
+	char keycode;
+
+	/* write EOI */
+	write_port(0x20, 0x20);
+
+	status = read_port(KEYBOARD_STATUS_PORT);
+	/* Lowest bit of status will be set if buffer is not empty */
+	if (status &amp; 0x01) {
+		keycode = read_port(KEYBOARD_DATA_PORT);
+		if(keycode &lt; 0)
+			return;
+		vidptr[current_loc++] = keyboard_map[keycode];
+		vidptr[current_loc++] = 0x07;	
+	}
+}
+</pre>
+<p>We first signal <strong>EOI</strong> (End Of Interrput acknowlegment) by writing it to the PIC&#8217;s command port. Only after this; will the PIC allow further interrupt requests. We have to read 2 ports here - the data port <code>0x60</code> and the command/status port <code>0x64</code>.</p>
+<p>We first read port <code>0x64</code> to get the status. If the lowest bit of the status is <code>0</code>, it means the buffer is empty and there is no data to read. In other cases, we can read the data port <code>0x60</code>. This port will give us a keycode of the key pressed. Each keycode corresponds to each key on the keyboard. We use a simple character array defined in the file <code>keyboard_map.h</code> to map the keycode to the corresponding character. This character is then printed on to the screen using the same technique we used in the previous article.</p>
+<p>In this article for the sake of brevity, I am only handling lowercase a-z and digits 0-9. You can with ease extend this to include special characters, ALT, SHIFT, CAPS LOCK. You can get to know if the key was pressed or released from the status port output and perform desired action. You can also map any combination of keys to special functions such as shutdown etc.</p>
+
+<p>You can build the kernel, run it on a real machine or an emulator (QEMU) exactly the same way as in the <a href="//arjunsreedharan.org/post/82710718100/kernel-101-lets-write-a-kernel" target="_blank">earlier article</a> (<a href="//github.com/arjun024/mkernel" target="_blank">its repo</a>).</p>
+<p>Start typing&#160;!!</p>
+<p><img alt="kernel running with keyboard support" src="//31.media.tumblr.com/1afd75b433b13df613fa0c2301977893/tumblr_inline_ncy1p0kSGj1rivrqc.png"/></p>

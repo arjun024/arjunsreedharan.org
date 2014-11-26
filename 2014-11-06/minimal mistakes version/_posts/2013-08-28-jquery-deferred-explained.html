@@ -1,0 +1,168 @@
+---
+layout: post
+title: jQuery Deferred explained
+date: '2013-08-28T15:00:00+05:30'
+tags: []
+tumblr_url: http://arjunsreedharan.org/post/59604950855/jquery-deferred-explained
+permalink: /post/59604950855/jquery-deferred-explained
+---
+<p class="MsoNormal">The concept of “Deferred” was introduced in jQuery 1.5. It’s a very powerful concept, especially when working with Ajax or asynchronous flows. The Deferred object provides a way to register multiple callbacks to a task&#8217;s outcome, invoke appropriate callback, and relay the success or failure state of any synchronous or asynchronous function. The callbacks can be bound even after the task is complete.</p>
+
+<p class="MsoNormal"></p>
+
+<p class="MsoNormal">What&#8217;s more,(since version 1.5)  deferreds are built-into<span class="apple-converted-space"> </span><code>$.ajax()</code><span class="apple-converted-space"> </span>so you&#8217;ll get them automatically<strong>. <span class="apple-converted-space"> </span>jQuery&#8217;s AJAX methods return an object containing a &#8220;promise&#8221;</strong>, which is used to track the asynchronous request. (More about “promise” <a href="#promise" title="The Deferred Promise()" target="_self">later in this article</a>)</p>
+
+<p><br/><br/></p>
+<p><strong>Deferred methods:</strong></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.done/" target="_blank"><span>deferred.done()</span></a><span></span></p>
+<p class="MsoNormal"><span>      ·<span>         </span></span><span>Add handlers to be called when the Deferred object is resolved.</span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.fail/" target="_blank"><span>deferred.fail()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Add handlers to be called when the Deferred object is rejected.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.isRejected/" target="_blank"><span>deferred.isRejected()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Determine whether a Deferred object has been rejected.</span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.isResolved/" target="_blank"><span>deferred.isResolved()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Determine whether a Deferred object has been resolved.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.reject/" target="_blank"><span>deferred.reject()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Reject a Deferred object and call any failCallbacks with the given args.</span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.rejectWith/" target="_blank"><span>deferred.rejectWith()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Reject a Deferred object and call any failCallbacks with the given context and args.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.resolve/" target="_blank"><span>deferred.resolve()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Resolve a Deferred object and call any doneCallbacks with the given args.</span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.resolveWith/" target="_blank"><span>deferred.resolveWith()</span></a><span></span></p>
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Resolve a Deferred object and call any doneCallbacks with the given context and args.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span>·<span>         </span></span><a href="http://api.jquery.com/deferred.then/" target="_blank"><span>deferred.then()</span></a><span></span></p>
+
+<p class="MsoNormal"><span>     </span><span> </span><span>·<span>         </span></span><span>Add handlers to be called when the Deferred object is resolved or rejected</span></p>
+
+<p><br/><br/></p>
+<p><strong>How we usually do:</strong></p>
+<p class="MsoNormal">Usually, the way we are used to deal with asynchronous code in Javascript is passing callbacks as an argument to the function:</p>
+<pre class="js tCont rainbow active">$.<span class="function call">ajax</span>({
+    url: <span class="string">"/data/json/"</span>,
+    data: {json: JSON.<span class="function call">stringify</span>({firstName: <span class="string">"Arjun"</span>, lastName: <span class="string">"Sreedharan"</span>})} ,
+    type: <span class="string">"POST"</span>,
+    success: <span class="keyword">function</span>(person){ 
+        <span class="function call">alert</span>(person.firstName <span class="keyword operator">+</span> <span class="string">" saved."</span>); 
+    },
+    error: <span class="keyword">function</span>(){ 
+        <span class="function call">alert</span>(<span class="string">"error!"</span>);
+    } 
+});</pre>
+
+<p class="MsoNormal">As you can see here, we are passing two callbacks (success and error) to the<span class="apple-converted-space"> </span><code>$.ajax()</code><span class="apple-converted-space"> </span>method using the object-literal syntax that the method supports.</p>
+
+<p><br/><br/></p>
+<p class="MsoNormal"><strong>Introducing $.Deferred</strong></p>
+<p class="MsoNormal">The deferred object is powerful as well as easy to understand. It has two important methods:</p>
+<p class="MsoNormal">·         resolve</p>
+<p class="MsoNormal">·         reject</p>
+<p class="MsoNormal"><span>And it has three important “events” or ways to attach a callback:</span></p>
+<p class="MsoNormal">·         done</p>
+<p class="MsoNormal">·         fail</p>
+<p class="MsoNormal">·         always</p>
+
+<p class="MsoNormal">A trivial example will be something like this</p>
+<pre class="js tCont rainbow active"><span class="keyword">var</span> deferred <span class="keyword operator">=</span> $.<span class="function call">Deferred</span>();
+
+deferred.<span class="function call">done</span>(<span class="keyword">function</span>(value) {
+   <span class="function call">alert</span>(value);  //arjunsreedharan.org
+});
+
+deferred.<span class="function call">resolve</span>(<span class="string">"arjunsreedharan.org"</span>);</pre>
+
+<p><br/><br/></p>
+<p class="MsoNormal">If you call the &#8220;reject&#8221; method the &#8220;fail&#8221; callback attached will be executed; the “always” callback is executed whether the deferred is resolved or rejected.</p>
+<p class="MsoNormal">Another interesting point is that if you attach a callback to an already resolved deferred, it get executes immediately:</p>
+<pre class="js tCont rainbow active"><span class="keyword">var</span> deferred <span class="keyword operator">=</span> $.<span class="function call">Deferred</span>();
+
+deferred.<span class="function call">resolve</span>(<span class="string">"<span>arjunsreedharan.org</span><span class="string">"</span><span>);</span><br/></span>
+deferred.<span class="function call">done</span>(<span class="keyword">function</span>(value) {
+    <span class="function call">alert</span>(value);  //<span>arjunsreedharan.org</span>
+});</pre>
+
+<p id="promise"> </p>
+<p><br/><br/></p>
+<p><strong>The Deferred Promise():</strong></p>
+<p>The Deferred object has another important method named promise(). The promise is a read-only view into the result of the task. Deferreds look for the presence of a promise() method to determine whether an object is observable or not.</p>
+<p>It gets better: all of Deferred&#8217;s methods accept either functions or arrays of functions, so you can build your behaviors and assign them all with one call, or in separate calls, as you please.</p>
+<p> This method returns an object with almost the same interface as the Deferred, but it only have the methods to attach callbacks and does not have the methods to resolve and reject.</p>
+<p>This is useful when you want to give to the calling API something to subscribe to, but not the ability to resolve or reject the deferred.</p>
+<p class="MsoNormal">The $.ajax method in JQuery returns a Promise, so you can do:</p>
+<pre><span class="keyword">var</span> post <span class="keyword">=</span> $.<span class="function">ajax</span>({<br/>    url: <span class="string">"/data/json/"</span>,<br/>    data: {json: JSON.<span class="function">stringify</span>({firstName: <span class="string">"Arjun"</span>, lastName: <span class="string">"Sreedharan"</span>}),<br/>    type: <span class="string">"POST"<br/><br/></span>});<br/><br/> post.<span class="function">done</span>(<span class="keyword">function</span>(p){<br/>    <span class="function">alert</span>(p.firstName <span class="keyword">+</span>  <span class="string">" saved."</span>);<br/>});<br/><br/> post.<span class="function">fail</span>(<span class="keyword">function</span>(){<br/>    <span class="function">alert</span>(<span class="string">"error!"</span>);<br/>});</pre>
+
+<p><br/><br/></p>
+<p class="MsoNormal"><strong>The Deferred Pipe():</strong></p>
+
+<p></p>
+<p>The Pipe method is very powerful and useful, it allows you to “project” a promise.</p>
+<p>Following the former example, we can do something like this:</p>
+<pre><span class="keyword">var</span> post <span class="keyword">=</span> $.<span class="function">post</span>(<span class="string">"/data/json/"</span>,<br/>                          {<br/>                            json: JSON.<span class="function">stringify</span>({firstName: <span class="string">"Arjun"</span>, lastName: <span class="string">"Sreedharan"</span>})<br/>                          }<br/>                         )<br/>                  .<span class="function">pipe</span>(<span class="keyword">function</span>(p){<br/>                            <span class="keyword">return</span> <span class="string">"Saved "</span> <span class="keyword">+</span> p.firstName;<br/>                        });<br/><br/> post.<span class="function">done</span>(<span class="keyword">function</span>(r){ <span class="function">alert</span>(r); });  //Saved Arjun</pre>
+
+<p class="MsoNormal">Here we are doing a projection of the result which is a “person” object. So, instead of having a Deferred of person, we have now a deferred of “Saved {firstName}”.</p>
+<p class="MsoNormal">Pipelines has some other usages, for instance, you can reject the deferred inside the pipe callback.</p>
+<p class="MsoNormal">Pipes can also be used to implement recursive deferreds.</p>
+
+<p><br/><br/></p>
+<p class="MsoNormal"><strong>The $.when() method:</strong></p>
+<p>Digging a little deeper here, imagine a scenario where we want to call a function after several concurrent AJAX requests have completed. This is easily accomplished with<span class="apple-converted-space"> </span><code>$.when()</code>, deferred&#8217;s little helper method:</p>
+<div>
+<pre><span class="keyword"><strong>function</strong></span><code> doAjax() {<br/><br/></code><code>  </code><span class="keyword"><strong>return</strong></span><code> $.get(</code><span class="string">'foo.htm'</span><code>);<br/><br/></code><code>}<br/><br/></code><code> </code><span class="keyword"><strong>function</strong></span><code> doMoreAjax() {<br/><br/></code><code>  </code><span class="keyword"><strong>return</strong></span><code> $.get(</code><span class="string">'bar.htm'</span><code>);<br/><br/></code><code>}<br/><br/></code><code> </code><code>$.when( doAjax(), doMoreAjax() )<br/><br/></code><code>  .done(</code><span class="keyword"><strong>function</strong></span><code>() {<br/><br/></code><code>    console.log( </code><span class="string">'I fire once BOTH ajax requests have completed!'</span><code> );<br/><br/></code><code>  })<br/><br/></code><code>  .fail(</code><span class="keyword"><strong>function</strong></span><code>() {<br/><br/></code><code>    console.log( </code><span class="string">'I fire if one or more requests failed.'</span><code> );<br/><br/></code><code>  });</code></pre>
+</div>
+
+<p>The reason this works is because all of jQuery&#8217;s AJAX methods return an object containing a &#8220;promise&#8221;, which is used to track the asynchronous request.<span class="apple-converted-space"> </span><strong>The promise is a read-only view into the result of the task.</strong><span class="apple-converted-space"> </span>Deferreds look for the presence of a<span class="apple-converted-space"> </span><code>promise()</code><span class="apple-converted-space"> </span>method to determine whether an object is observable or not. The<span class="apple-converted-space"> </span><code>$.when()</code><span class="apple-converted-space"> </span>waits for all its AJAX requests to execute (ie. either get resolved or get rejected), and once they do, the callbacks attached to the <code>$.when()</code><span class="apple-converted-space"> </span>via<span class="apple-converted-space"> </span><code>.done()</code><span class="apple-converted-space"> </span>and<span class="apple-converted-space"> </span><code>.fail()</code><span class="apple-converted-space"> </span>will fire as appropriate (depending on task&#8217;s state of resolution or rejection). The callbacks fire in the order they were assigned.</p>
+<p><code>$.ajax()</code><span class="apple-converted-space"> </span><span>returns an object packed with other deferred-related methods. Apart from</span><span class="apple-converted-space"> </span><code>promise()</code><span>, you’ll also find</span><span class="apple-converted-space"> </span><code>then()</code><span>,</span><span class="apple-converted-space"> </span><code>done()</code><span>,</span><span class="apple-converted-space"> </span><code>fail()</code><span>, and a host of others. You don’t have access to the complete deferred object, though; only the promise, callback-binding methods, and the</span><span class="apple-converted-space"> </span><code>isRejected()</code><span class="apple-converted-space"> </span><span>and</span><span class="apple-converted-space"> </span><code>isResolved()</code><span class="apple-converted-space"> </span><span>methods, which can be used to check the state of the deferred.</span></p>
+
+<p> </p>
+<p><strong>Registering callbacks:</strong></p>
+<p><span>In the examples thus far, We&#8217;ve used</span><span class="apple-converted-space"> </span><code>done()</code><span>, and</span><span class="apple-converted-space"> </span><code>fail()</code><span class="apple-converted-space"> </span><span>methods to register callbacks onto the deferred, but there are more methods available to you, especially when working with AJAX deferreds. The method you choose ultimately depends on the resolution state(s) you’d like to bind to.</span></p>
+<p>Available to all deferreds (AJAX,<span class="apple-converted-space"> </span><code>$.when</code>, and those created manually):</p>
+<div>
+<pre><code>.then( doneCallbacks, failedCallbacks )</code></pre>
+<pre><code>.done( doneCallbacks )</code></pre>
+</div>
+<div>
+<pre><code>.fail( failCallbacks )</code></pre>
+</div>
+<p><br/><br/></p>
+<p>AJAX deferreds have three additional methods, two of which map to one of the above. They are provided as semantic alternatives and match the names of the &#8220;old&#8221; handlers we&#8217;re all used to:</p>
+<div>
+<pre><span class="comment"><em>// "success" and "error" map to "done" and "fail" respectively.</em></span></pre>
+<pre><code>.success( doneCallbacks )</code></pre>
+</div>
+<div>
+<pre><code>.error( failCallbacks )</code></pre>
+</div>
+<p><br/><br/></p>
+<p>You can register a<span class="apple-converted-space"> </span><code>complete</code><span class="apple-converted-space"> </span>handler that&#8217;ll fire regardless of the success or failure state of the request. Unlike <code>success</code><span class="apple-converted-space"> </span>and<span class="apple-converted-space"> </span><code>error</code>,<span class="apple-converted-space"> </span><code>complete</code><span class="apple-converted-space"> </span>is actually an alias to the<span class="apple-converted-space"> </span><code>done</code><span class="apple-converted-space"> </span>method of a separate deferred. This separate deferred, created internally by<span class="apple-converted-space"> </span><code>$.ajax()</code>, is resolved after an AJAX request completes, regardless of the outcome.</p>
+<div>
+<pre><code>.complete( completeCallbacks );</code></pre>
+</div>
+<p><br/><br/></p>
+<p>Therefore, the following three examples are equivalent (success reads better than done in the context of an AJAX request, don&#8217;t you think?)</p>
+<div>
+<pre><code>$.get(</code><span class="string">"/foo/"</span><code>).done( fn );<br/><br/></code><code> </code><em>// same as:<br/><br/></em><code> </code><code>$.get(</code><span class="string">"/foo/"</span><code>).success( fn );<br/><br/></code><code> </code><span class="comment"><em>// same as:</em></span><code> </code><code>$.get(</code><span class="string">"/foo/"</span><code>, fn );<br/><br/></code></pre>
+</div>
+<p><br/><br/></p>
+<p><strong>Creating Your own Deferreds:</strong></p>
+<p>We know that<span class="apple-converted-space"> </span><code>$.ajax</code><span class="apple-converted-space"> </span>and<span class="apple-converted-space"> </span><code>$.when</code><span class="apple-converted-space"> </span>implement the deferred API internally, but you can also create your own implementations:</p>
+<div>
+<pre><span class="keyword"><strong>function</strong></span><code> getData() {<br/></code><code>  </code><span class="keyword"><strong>return</strong></span><code> $.get(</code><span class="string">'/foo/');</span><code><br/></code><code>}<br/><br/></code><span class="keyword"><strong>function</strong></span><code> showDiv() {<br/></code><code>  </code><span class="keyword"><strong>var</strong></span><code> dfd = $.Deferred();<br/><br/></code><code> </code><code>  $(</code><span class="string">'#foo'</span><code>).fadeIn( </code><span class="number">1000</span><code>, dfd.resolve );<br/><br/></code><code> </code><code>  </code><span class="keyword"><strong>return</strong></span><code> dfd.promise();<br/><br/></code><code>}<br/><br/></code><code> </code><code>$.when( getData(), showDiv() ).done(</code><span class="keyword"><strong>function</strong></span><code>( ajaxResult ) {<br/><br/></code><code>  console.log(</code><span class="string">'The animation AND the AJAX request are both done!'</span><code>);<br/><br/></code><code> </code><code>  </code><span class="comment"><em>// &#8216;ajaxResult&#8217; is the server&#8217;s response</em></span>
+<code>});</code></pre>
+</div>
+
+<p>Inside<span class="apple-converted-space"> </span><code>showDiv, </code> a new deferred object is created, performing an animation, and returning the promise. The deferred is resolved after the<span class="apple-converted-space"> </span><code>fadeIn() </code>call completes. Between the time the promise is returned and the deferred is resolved, a<span class="apple-converted-space"> </span><code>done()</code><span class="apple-converted-space"> </span>callback is registered to the successful completion of both asynchronous tasks. Therefore, once both tasks resolve, the callback is fired.</p>
+
+<p></p>
+
+<p></p>
+
+<p></p>
+<p><code>getData()</code><span class="apple-converted-space"> </span>returns an object with a promise method, which allows<span class="apple-converted-space"> </span><code>$.when()</code><span class="apple-converted-space"> </span>to observe its eventual resolution. The manually steps we took to return a promise in<span class="apple-converted-space"> </span><code>showDiv()</code><span class="apple-converted-space"> </span>is handled for us internally by<code>$.ajax()</code><span class="apple-converted-space"> </span>and<span class="apple-converted-space"> </span><code>$.when()</code>.</p>
+<p>The <code>$.Deferred(fn).promise()</code><span class="apple-converted-space"> </span>signature allows us to further shorten the syntax:</p>
+<div>
+<pre><span class="keyword"><strong>function</strong></span><code> showDiv() {<br/><br/></code><code>  </code><span class="keyword"><strong>var</strong></span><code> dfd = $.Deferred();<br/><br/></code><code> </code><code>  $(</code><span class="string">'#foo'</span><code>).fadeIn( </code><span class="number">1000</span><code>, dfd.resolve );<br/><br/></code><code> </code><code>  </code><span class="keyword"><strong>return</strong></span><code> dfd.promise();<br/><br/></code><code>}</code><code> <br/><br/></code><span class="comment"><em>// same as:<br/><br/></em></span><code> </code><span class="keyword"><strong>function</strong></span><code> showDiv() {<br/><br/></code><code>  </code><span class="keyword"><strong>return</strong></span><code> $.Deferred(</code><span class="keyword"><strong>function</strong></span><code>( dfd ) {<br/><br/></code><code>    $(</code><span class="string">'#foo'</span><code>).fadeIn( </code><span class="number">1000</span><code>, dfd.resolve );<br/><br/></code><code>  }).promise();<br/><br/></code><code>}</code></pre>
+</div>

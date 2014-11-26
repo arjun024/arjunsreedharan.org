@@ -1,0 +1,55 @@
+# Site wide configuration
+
+title:            Arjun Sreedharan
+locale:           en_US
+url:              //arjun024.github.io/blog
+
+
+# Jekyll configuration
+
+permalink:   /blog/:title/
+markdown:    kramdown
+highlighter: pygments
+sass:
+  sass_dir: _sass
+  style: compressed
+gems:
+  - jekyll-sitemap
+
+kramdown:
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  use_coderay: false
+
+
+# Site owner
+owner:
+  name: Arjun Sreedharan
+  avatar: bio-photo.jpg
+  bio: "Arjun Sreedharan is a Computer Science Engineer, who works as a developer at Bangalore. Armed with a bachelor's from NIT Calicut, and an inclination to look for lazier solutions to coding headaches."
+  email: arjun024@gmai.com
+  disqus-shortname: arjun024
+  twitter: arjun024
+  facebook: arjun024
+  google:
+    plus: 
+    analytics: 
+    verify: 
+    ad-client: 
+    ad-slot: 
+  bing-verify: 
+  github: arjun024
+  stackoverflow: 997813
+  linkedin:
+  instagram: arjun024
+  lastfm:
+  tumblr:
+  pinterest:
+  foursquare:
+  steam:
+  dribbble:
+
+include: [".htaccess"]
+exclude: ["lib", "config.rb", "Capfile", "config", "log", "Rakefile", "Rakefile.rb", "tmp", "less", "*.sublime-project", "*.sublime-workspace", "test", "spec", "Gruntfile.js", "package.json", "node_modules", "Gemfile", "Gemfile.lock", "LICENSE", "README.md"]

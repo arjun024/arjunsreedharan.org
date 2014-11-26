@@ -1,0 +1,98 @@
+---
+layout: post
+title: How to root your Google Nexus 4
+date: '2013-08-03T17:30:00+05:30'
+tags:
+- Google Nexus 4
+- Rooting
+- android
+- adb
+- fastboot
+tumblr_url: http://arjunsreedharan.org/post/57275116042/how-to-root-your-google-nexus-4
+permalink: /post/57275116042/how-to-root-your-google-nexus-4
+---
+<p class="MsoNormal"><span>You don’t have root access to your Google Nexus 4,</span><span> which y<span>ou spent your hard earned money to </span>buy?? </span></p>
+<p class="MsoNormal"><span>Don’t worry!!     </span></p>
+<p class="MsoNormal"><span>Rooting your Nexus 4 is but a piece of Cake.</span><span> <span>(Do at your own risk though!)</span></span></p>
+<p class="MsoNormal"><span><span><img alt="image" src="http://media.tumblr.com/e982fffd647337f0950fe2354384a4c2/tumblr_inline_mqz523U7391qz4rgp.jpg"/></span></span></p>
+
+<p></p>
+<p class="MsoNormal"><span>First things first – <strong>THE PROCEDURE BELOW WILL WIPE ALL YOUR DATA CLEAN</strong>.</span></p>
+<p class="MsoNormal"><span><strong>1.</strong> Take a Backup of your personal files, contacts, messages etc (only if you want to :P).</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>2.</strong> Download Google Nexus 4 USB drivers (</span><a href="https://developers.google.com/android/nexus/drivers" target="_blank"><span><a href="https://developers.google.com/android/nexus/drivers" target="_blank">https://developers.google.com/android/nexus/drivers</a></span></a><span>) and unzip it.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>3.</strong> Turn on USB debugging mode from Developer Settings in your phone and connect it to your PC.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>4.</strong> Go to Device Manager, select your phone, right click -&gt; update drivers and when it asks for driver location, browse to the downloaded unzipped folder and select it. Driver install successful.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>5.</strong> Download <strong>Android SDK</strong>, <strong>Team Win Recovery Project (twrp) </strong>image and <strong>Chainfire-SuperSU</strong> zip</span></p>
+<p class="MsoNormal"><span>                Links:     </span><span><a href="http://developer.android.com/sdk/index.html" target="_blank"><span><a href="http://developer.android.com/sdk/index.html" target="_blank">http://developer.android.com/sdk/index.html</a></span></a>,</span></p>
+<p class="MsoNormal"><span>                                <a href="http://techerrata.com/browse/twrp2/mako" target="_blank"><span><a href="http://techerrata.com/browse/twrp2/mako" target="_blank">http://techerrata.com/browse/twrp2/mako</a></span></a>,</span></p>
+<p class="MsoNormal"><span>                                <a href="http://download.chainfire.eu/344/SuperSU/" target="_blank"><span><a href="http://download.chainfire.eu/344/SuperSU/" target="_blank">http://download.chainfire.eu/344/SuperSU/</a></span></a></span></p>
+<p class="MsoNormal"><span><span> </span></span></p>
+<p class="MsoNormal"><span>Android SDK gives you two main tools – adb and fastboot. </span></p>
+<p class="MsoNormal"><strong><span>adb</span></strong><span> (Android debug bridge) is a client-server tool that lets you communicate with an Android device.</span></p>
+<p class="MsoNormal"><span>When you&#8217;re working in the bootloader, adb no longer works. You&#8217;re not yet booted into Android, and the debugging tools aren&#8217;t active to communicate with. That&#8217;s where we use fastboot.</span></p>
+
+<p class="MsoNormal"><span><strong>fastboot</strong> is a utility that lets you directly flash the filesystem via USB. </span></p>
+<p class="MsoNormal"><span>Both of them are located in the /sdk/platform-tools directory of your android sdk­.<span></span></span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>6.</strong> Go into the <em>/sdk/platform-tools</em> folder of Android SDK and locate adb and fastboot files</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>7</strong>. Copy the Team Win Project Recovery image file into there. (This is done for ease of typing commands in the command prompt). The image filename would be something like <em>openrecovery-twrp-x.x.x.x-mako.img</em></span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><strong><span>#### Now we will proceed to unlock the bootloader ####</span></strong></p>
+<p class="MsoNormal"><strong><span> </span></strong></p>
+<p class="MsoNormal"><span><strong>8</strong>. Make sure your phone is detected by adb. For that Open your browse via command line to the <em>/sdk/platform-tools</em> of your android sdk folder and type in:</span></p>
+<p class="MsoNormal"><span>   adb devices</span></p>
+<p class="MsoNormal"><span>   This should list your device if all is well.      </span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>9.</strong> Now reboot your phone in the bootloader mode.</span></p>
+<pre class="prettyprint"><span></span> adb reboot bootloader</pre>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>10</strong>. Now to unlock the bootloader:</span></p>
+<pre class="prettyprint">fastboot oem unlock</pre>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>11.</strong> Confirm by selecting ‘Yes’ using Volume-Up and Power button.</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span> <img alt="image" src="http://media.tumblr.com/28baadf02d7a8c014597fb31c705eff3/tumblr_inline_mqz52u4ls71qz4rgp.jpg"/></span></p>
+
+<p class="MsoNormal"><strong><span>#### Now we will flash the twrp custom recovery ####</span></strong></p>
+<p class="MsoNormal"><strong><span> </span></strong></p>
+<p class="MsoNormal"><span><strong>12.</strong> Again reboot your phone in the bootloader mode</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><span><strong>13.</strong> Flash twrp recovery.</span></p>
+<pre class="prettyprint">fastboot flash recovery &lt;name-of-twrp-recovery-image&gt;</pre>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>14.</strong> Select &#8216;<strong>Recovery mode</strong>' using volume buttons and Power button to get into twrp homescreen.</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>15.</strong> Select Backup and take a backup.</span></p>
+
+<p class="MsoNormal"><strong>16.</strong><span> Again come to twrp homescreen</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>17.</strong> Reboot</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><strong><span>######### Rooting ##########</span></strong></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>18.</strong> Connect phone to PC via USB and transfer SuperSu zip to phone&#8217;s internal memory</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>19.</strong> Again reboot your phone in the bootloader mode </span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>20.</strong> Select ‘<strong>Recovery mode</strong>’ to get into twrp homescreen</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>21</strong>. Select <strong>Install</strong></span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>22.</strong> Select the SuperSu zip file from its path</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>23.</strong> Click/Swipe on &#8216;Install&#8217;</span></p>
+<p class="MsoNormal"><span></span></p>
+<p class="MsoNormal"><span><strong>24.</strong> Reboot</span></p>
+<p class="MsoNormal"><span> </span></p>
+<p class="MsoNormal"><strong><span>############## You are Now the Root ##############</span></strong></p>
+<p class="MsoNormal"><span> <img alt="image" src="http://media.tumblr.com/66271f1d70eff852513e6f962c2555cd/tumblr_inline_mqz539wnEL1qz4rgp.jpg"/></span></p>
+
+<p></p>
+<p class="MsoNormal"><span> </span></p>

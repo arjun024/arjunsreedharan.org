@@ -1,0 +1,211 @@
+---
+layout: post
+title: Kernel 101 – Let's write a Kernel
+date: '2014-04-14T15:12:00+05:30'
+tags:
+- kernel
+- operating system
+- c
+- asm
+- assembly
+- x86
+- cpu
+- booting
+- programming
+- bootloader
+- grub
+- nasm
+- ld
+- gcc
+- technology
+tumblr_url: http://arjunsreedharan.org/post/82710718100/kernel-101-lets-write-a-kernel
+permalink: /post/82710718100/kernel-101-lets-write-a-kernel
+---
+<p><span>Hello World,</span></p>
+<p>Let us write a simple kernel which could be loaded with the GRUB bootloader on an x86 system. This kernel will display a message on the screen and then hang.</p>
+
+<p><img alt="One does simply write a kernel" src="//static.tumblr.com/gltvynn/MDYn443cj/one-does-not-kernel.jpg" width="75%"/></p>
+<p><br/><br/></p>
+<p><strong class="post-heading">How does an x86 machine boot</strong></p>
+<p>Before we think about writing a kernel, let&#8217;s see how the machine boots up and transfers control to the kernel:</p>
+<p>The x86 CPU is hardwired to begin execution at the physical address [<strong>0xFFFFFFF0</strong>]. It is in fact, the last 16 bytes of the 32-bit address space. This address just contains a jump instruction to the address in memory where BIOS has copied itself.</p>
+<p>Thus, the BIOS code starts its execution.  BIOS first searches for a bootable device in the configured boot device order. It checks for a certain magic number to determine if the device is bootable or not.</p>
+<p>Once the BIOS has found a bootable device, it copies the contents of the device&#8217;s first sector into RAM starting from physical address [<strong>0x7c00</strong>]; and then jumps into the address and executes the code just loaded. This code is called the <strong>bootloader</strong>.</p>
+<p>The bootloader then loads the kernel at the physical address [<strong>0x100000</strong>]. The address [0x100000] is used as the start-address for all big kernels on x86 machines.</p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">What all do we need?</strong></p>
+<p>* An x86 computer (of course)<br/> * Linux <br/> * <a href="//www.nasm.us/" target="_blank">NASM assembler<br/> * gcc<br/> * ld (GNU Linker)<br/> * grub</a></p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">Source Code</strong></p>
+<p>Source code is available at my <a href="//github.com/arjun024/mkernel" target="_blank">Github repository - mkernel</a></p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">The entry point using assembly</strong></p>
+<p>We like to write everything in C, but we cannot avoid a little bit of assembly. We will write a small file in x86 assembly-language that serves as the starting point for our kernel. All our assembly file will do is invoke an external function which we will write in C, and then halt the program flow.</p>
+<p>How do we make sure that this assembly code will serve as the starting point of the kernel?</p>
+<p class="indent5">We will use a linker script that links the object files to produce the final kernel executable. (more explained later)  In this linker script, we will explicitly specify that we want our binary to be loaded at the address [0x100000]. This address, as I have said earlier, is where the kernel is expected to be. Thus, the bootloader will take care of firing the kernel&#8217;s entry point.</p>
+
+<p>Here&#8217;s the assembly code:</p>
+
+<pre class="prettyprint lang-asm">;;kernel.asm
+bits 32			;nasm directive - 32 bit
+section .text
+
+global start
+extern kmain	        ;kmain is defined in the c file
+
+start:
+  cli 			;block interrupts
+  call kmain
+  hlt		 	;halt the CPU
+</pre>
+<p>The first instruction <code>bits 32</code> is not an x86 assembly instruction. It&#8217;s a directive to the NASM assembler that specifies it should generate code to run on a processor operating in 32 bit mode. It is not mandatorily required in our example, however is included here as it&#8217;s good practice to be explicit.</p>
+<p>The second line begins the text section (aka code section). This is where we put all our code.</p>
+<p><code>global</code> is another NASM directive to set symbols from source code as global. By doing so, the linker knows where the symbol <code>start</code> is; which happens to be our entry point.</p>
+<p><code>kmain</code> is our function that will be defined in our <code>kernel.c</code> file. <code>extern</code> declares that the function is declared elsewhere.</p>
+<p>Then, we have the <code>start</code> function, which calls the <code>kmain</code> function and halts the CPU using the <code>hlt</code> instruction. Interrupts can awake the CPU from an <code>hlt</code> instruction. So we disable interrupts beforehand using <code>cli</code> instruction. <code>cli</code> is short for clear-interrupts.</p>
+
+<p> </p>
+
+<p><strong class="post-heading">The kernel in C</strong></p>
+<p>In <code>kernel.asm</code>, we made a call to the function <code>kmain()</code>. So our C code will start executing at <code>kmain()</code>:</p>
+<pre class="prettyprint lang-c">/*
+*  kernel.c
+*/
+void kmain(void)
+{
+	char *str = "my first kernel";
+	char *vidptr = (char*)0xb8000; 	//video mem begins here.
+	unsigned int i = 0;
+	unsigned int j = 0;
+	//clear all
+	while(j &lt; 80 * 25 * 2) {
+		//blank character
+		vidptr[j] = ' ';
+		//attribute-byte: light grey on black screen	
+		vidptr[j+1] = 0x07; 		
+		j = j + 2;
+	}
+	j = 0;
+	while(str[j] != '\0') {
+		vidptr[i] = str[j];
+		vidptr[i+1] = 0x07;
+		++j;
+		i = i + 2;
+	}
+	return;
+}
+</pre>
+<p>All our kernel will do is clear the screen and write to it the string &#8220;my first kernel&#8221;.</p>
+<p>First we make a pointer <code>vidptr</code> that points to the address [<strong>0xb8000</strong>]. This address is the start of video memory in protected mode. The screen&#8217;s text memory is simply a chunk of memory in our address space. The memory mapped input/output for the screen starts at [0xb8000] and supports 25 lines, each line contain 80 ascii characters.</p>
+<p>Each character element in this text memory is represented by 16 bits (2 bytes), rather than 8 bits (1 byte) which we are used to.  The first byte should have the representation of the character as in ASCII. The second byte is the <code>attribute-byte</code>. This describes the formatting of the character including attributes such as color.</p>
+<p>To print the character <code>s</code> in green color on black background, we will store the character <code>s</code> in the first byte of the video memory address and the value [0x02] in the second byte. <br/><code>0</code> represents black background and <code>2</code> represents green foreground.</p>
+<p><br/> Have a look at table below for different colors:</p>
+<pre>0 - Black, 1 - Blue, 2 - Green, 3 - Cyan, 4 - Red, 5 - Magenta, 6 - Brown, 7 - Light Grey, 8 - Dark Grey, 9 - Light Blue, 10/a - Light Green, 11/b - Light Cyan, 12/c - Light Red, 13/d - Light Magenta, 14/e - Light Brown, 15/f – White.</pre>
+<p><br/><br/></p>
+
+<p>In our kernel, we will use light grey character on a black background. So our attribute-byte must have the value [0x07].</p>
+<p>In the first while loop, the program writes the blank character with [0x07] attribute all over the 80 columns of the 25 lines. This thus clears the screen.</p>
+<p>In the second while loop, characters of the null terminated string &#8220;my first kernel&#8221; are written to the chunk of video memory with each character holding an attribute-byte of [0x07].</p>
+<p>This should display the string on the screen.</p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">The linking part</strong></p>
+<p>We will assemble <code>kernel.asm</code> with NASM to an object file; and then using GCC we will compile <code>kernel.c</code> to another object file. Now, our job is to get these objects linked to an executable bootable kernel.<br/><br/> For that, we use an explicit linker script, which can be passed as an argument to <code>ld</code> (our linker).</p>
+<pre class="prettyprint lang-ld">/*
+*  link.ld
+*/
+OUTPUT_FORMAT(elf32-i386)
+ENTRY(start)
+SECTIONS
+ {
+   . = 0x100000;
+   .text : { *(.text) }
+   .data : { *(.data) }
+   .bss  : { *(.bss)  }
+ }
+</pre>
+<p>First, we set the <strong>output format</strong> of our output executable to be 32 bit <a href="//elinux.org/Executable_and_Linkable_Format_(ELF)" target="_blank">Executable and Linkable Format</a> (ELF). ELF is the standard binary file format for Unix-like systems on x86 architecture.</p>
+<p><strong>ENTRY</strong> takes one argument. It specifies the symbol name that should be the entry point of our executable.</p>
+<p><strong>SECTIONS</strong> is the most important part for us. Here, we define the layout of our executable. We could specify how the different sections are to be merged and at what location each of these is to be placed.</p>
+<p>Within the braces that follow the SECTIONS statement, the period character (.) represents the<strong> location counter</strong>.<br/> The location counter is always initialized to [0x0] at beginning of the SECTIONS block. It can be modified by assigning a new value to it.</p>
+<p>Remember, earlier I told you that kernel&#8217;s code should start at the address [0x100000]. So, we set the location counter to [0x100000].</p>
+<p>Have look at the next line <strong>.text&#160;: { *(.text) }</strong></p>
+<p>The asterisk (*) is a wildcard character that matches any file name. The expression<code> *(.text)</code> thus means all <code>.text</code> input sections from all input files.<br/><br/> So, the linker merges all text sections of the object files to the executable&#8217;s text section, at the address stored in the location counter. Thus, the code section of our executable begins at [0x100000].</p>
+<p>After the linker places the text output section, the value of the location counter will become <br/> 0x1000000 + the size of the text output section.</p>
+<p>Similarly, the data and bss sections are merged and placed at the then values of location-counter.</p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">Grub and Multiboot</strong></p>
+<p>Now, we have all our files ready to build the kernel. But, since we like to boot our kernel with the <a href="//www.gnu.org/software/grub/" target="_blank">GRUB bootloader</a>, there is one step left.</p>
+<p>There is a standard for loading various x86 kernels using a boot loader; called as <strong>Multiboot specification</strong>.</p>
+<p>GRUB will only load our kernel if it complies with the <a href="//www.gnu.org/software/grub/manual/multiboot/multiboot.html" target="_blank">Multiboot spec</a>.</p>
+<p>According to the spec, the kernel must contain a header (known as Multiboot header) within its first 8 KiloBytes.</p>
+<p>Further, This Multiboot header must contain 3 fields that are 4 byte aligned namely:</p>
+<ul><li>a <strong>magic</strong> field: containing the magic number [<strong>0x1BADB002</strong>], to identify the header.</li>
+<li>a <strong>flags</strong> field: We will not care about this field. We will simply set it to zero.</li>
+<li>a <strong>checksum</strong> field: the checksum field when added to the fields ‘magic’ and ‘flags’ must give zero.</li>
+</ul><p>So our <code>kernel.asm</code> will become:</p>
+<pre class="prettyprint lang-asm">;;kernel.asm
+
+;nasm directive - 32 bit
+bits 32
+section .text
+        ;multiboot spec
+        align 4
+        dd 0x1BADB002            ;magic
+        dd 0x00                  ;flags
+        dd - (0x1BADB002 + 0x00) ;checksum. m+f+c should be zero
+
+global start
+extern kmain	        ;kmain is defined in the c file
+
+start:
+  cli 			;block interrupts
+  call kmain
+  hlt		 	;halt the CPU
+</pre>
+<p>The <strong>dd</strong> defines a double word of size 4 bytes. <br/><br/></p>
+<p><strong class="post-heading">Building the kernel</strong></p>
+<p>We will now create object files from <code>kernel.asm</code> and <code>kernel.c</code> and then link it using our linker script.</p>
+<pre class="prettyprint lang-sh">nasm -f elf32 kernel.asm -o kasm.o
+</pre>
+<p>will run the assembler to create the object file kasm.o in ELF-32 bit format.</p>
+<pre class="prettyprint lang-sh">gcc -m32 -c kernel.c -o kc.o
+</pre>
+<p>The &#8216;-c &#8217; option makes sure that after compiling, linking doesn&#8217;t implicitly happen.</p>
+<pre class="prettyprint lang-sh">ld -m elf_i386 -T link.ld -o kernel kasm.o kc.o
+</pre>
+<p>will run the linker with our linker script and generate the executable named <strong>kernel</strong>.</p>
+<p><br/><br/></p>
+<p><strong class="post-heading">Configure your grub and run your kernel</strong></p>
+<p>GRUB requires your kernel to be of the name pattern <code>kernel-&lt;version&gt;</code>. So, rename the kernel. I renamed my kernel executable to kernel-701.</p>
+<p>Now place it in the <strong>/boot</strong> directory. You will require superuser privileges to do so.</p>
+<p>In your GRUB configuration file <code>grub.cfg</code> you should add an entry, something like:</p>
+<pre>title myKernel
+	root (hd0,0)
+	kernel /boot/kernel-701 ro
+</pre>
+<p><br/><br/></p>
+<p>Don&#8217;t forget to remove the directive <code>hiddenmenu</code> if it exists.</p>
+
+<p>Reboot your computer, and you&#8217;ll get a list selection with the name of your kernel listed.</p>
+<p>Select it and you should see:</p>
+<p><img alt="image" src="//static.tumblr.com/gltvynn/yOdn443dr/mkernel.png"/></p>
+<p>That&#8217;s your kernel!!</p>
+
+<p><br/><br/></p>
+<p><strong class="post-heading">PS:<br/></strong> * It&#8217;s always advisable to get yourself a virtual machine for all kinds of kernel hacking.</p>
+<p>* To run this on <strong>grub2 </strong>which is the default bootloader for newer distros, your config should look like this (Thanks to <a href="//rubenlaguna.com/" target="_blank">Rubén Laguna</a> from comments for the config):</p>
+<pre>menuentry 'kernel 7001' {
+	set root='hd0,msdos1'
+	multiboot /boot/kernel-7001 ro
+}
+</pre>
+<p><br/><br/></p>
+<p>* Also, if you want to run the kernel on the <code>qemu</code> emulator instead of booting with GRUB, you can do so by:</p>
+<pre class="prettyprint lang-sh">qemu-system-i386 -kernel kernel<span><br/></span></pre>
+
+<p>Also, see the next article in the Kernel series: <br/><a href="http://arjunsreedharan.org/post/99370248137/kernel-201-lets-write-a-kernel-with-keyboard-and" target="_blank">Kernel 201 - Let’s write a Kernel with keyboard and screen support</a></p>

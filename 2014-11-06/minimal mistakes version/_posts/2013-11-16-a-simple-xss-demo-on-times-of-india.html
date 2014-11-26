@@ -1,0 +1,67 @@
+---
+layout: post
+title: A simple XSS demo – on Times of India
+date: '2013-11-16T08:31:25+05:30'
+tags:
+- XSS
+- javascript
+- Secuity
+- Technology
+tumblr_url: http://arjunsreedharan.org/post/67148385214/a-simple-xss-demo-on-times-of-india
+permalink: /post/67148385214/a-simple-xss-demo-on-times-of-india
+---
+<p>Some time ago, I dropped by the Times of India website and entered a &#8220;vector&#8221; string as a query in the search field. Then, the page heading read as below (<a href="http://twitter.com/arjun024" target="_blank">Arjun024</a> being my twitter handle):</p>
+<p><strong>News: All twitter followers of Arjun024 to be awarded gold coins</strong></p>
+
+<p><br/><br/><br/></p>
+<p>Later someday, I searched Google for &#8220;<a href="https://www.google.com/search?q=arjun024+Times+of+India" target="_blank">arjun024 Times of India</a>&#8221;. To my astonishment, Google indexed the link with the &#8220;attacking&#8221; vector and displayed it as the first result. Now, it is there for posterity to have a go at winning some gold coins ;)</p>
+<p>Now let us see how it&#8221;s done:</p>
+<p>We get to the <a href="http://timesofindia.indiatimes.com/search.cms" target="_blank">Times of India search page</a> where we can search using the url parameter &#8220;query&#8221;.<br/> Let&#8221;s say we want to search for <em>mega</em>, then the url looks like:</p>
+<p><img src="http://media.tumblr.com/f596d05d897d608a4f6e1cda75732b7b/tumblr_inline_mwb91vm7oL1rivrqc.png"/></p>
+
+<p> </p>
+<p><br/><br/></p>
+<p>This is how it appears in their not-sanitized html output:</p>
+<p><img src="http://media.tumblr.com/d40426655e6fd081eec89afe6e4a3829/tumblr_inline_mwb92ifBhc1rivrqc.png"/></p>
+<p><br/><br/></p>
+
+<p>Whatever value is supplied for the parameter &#8220;query&#8221;, it is without sanitization assigned to a JavaScript variable here in the form:</p>
+<pre class="prettify">&lt;script type="text/javascript"&gt;var searchvel="queryParameterValue";&lt;/script&gt;</pre>
+<p>where <em>queryParameterValue</em> is the value of the url parameter &#8220;query&#8221;</p>
+
+<p>This means that if you give a quotation mark (&#8220;) in the parameter value, the part after the quotation mark escapes out of the assignment to the <em>searchvel</em> variable.</p>
+<p><br/><br/></p>
+<p>Let&#8221;s try out one such case.</p>
+<p>Here, we query for <em>Na&#8221;//ma</em>  :  the quotation-mark tricks JavaScript to believe that it is the end of the string and the double forward slashes makes JavaScript consider everything after that as comments and therefore as inactive code.</p>
+<p><img src="http://media.tumblr.com/7b779d66ca3119a8c3c498c7f7e9628d/tumblr_inline_mwb94x7izb1rivrqc.png"/></p>
+
+<p> </p>
+<p>So, we effectively have:</p>
+<pre class="prettify">var searchvel = "Na"      // mas";</pre>
+
+<p><br/><br/></p>
+<p><strong>Now, we have successfully injected a piece of comment, now why not a piece of code?</strong></p>
+<p>So, we give the parameter value as <em>";alert(1)//</em></p>
+<p><br/><br/></p>
+<p>Here is what happens:</p>
+<p><img src="http://media.tumblr.com/1b0395a6a59803e462211a08b0773429/tumblr_inline_mwb97yOZsX1rivrqc.png"/></p>
+
+<p> </p>
+<p>And the html looks like this:</p>
+<p><br/><br/></p>
+<p><img src="http://media.tumblr.com/6b726d88cb074ba2ed3133f90b3856de/tumblr_inline_mwb9ciFCt71rivrqc.png"/></p>
+<p><span> </span></p>
+<p>Now, we could insert whatever script we like to and get it reflected off the site in what is a reflected XSS &#8220;attack&#8221;.</p>
+<p><br/><br/></p>
+<p>I chose to give myself some (cheap) publicity :P and replace the body content with a piece of &#8220;news&#8221;.</p>
+<p>Here&#8221;s what my URL looked like:</p>
+<pre class="prettify">";&lt;/script&gt;&lt;body&gt;&lt;h1&gt;News: All twitter followers of Arjun024 to be awarded gold coins&lt;/h1&gt;&lt;h3&gt;NewDelhi: Govt of India has announced gold coins for all followers of Arjun024.. LOL&lt;/h3&gt;&lt;/body&gt;&lt;/html&gt;&lt; !--</pre>
+<p><br/><br/></p>
+<p>The html comment begin token <em>&lt;!- -</em> makes sure that everything to follow remain commented and the document effectively ends there.</p>
+<p><br/><br/></p>
+<p>And here&#8221;s how the &#8220;news&#8221; appeared:</p>
+<p><img src="http://media.tumblr.com/0aaa195eed6dd83ab6626c7f15e6fa6a/tumblr_inline_mwb9faUCpv1rivrqc.png"/></p>
+
+<p> </p>
+
+<p> </p>

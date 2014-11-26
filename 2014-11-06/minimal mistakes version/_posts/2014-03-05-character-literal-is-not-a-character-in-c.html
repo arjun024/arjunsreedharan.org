@@ -1,0 +1,65 @@
+---
+layout: post
+title: Character literal is not a character in C !!
+date: '2014-03-05T01:31:00+05:30'
+tags:
+- C
+- programming
+- integer
+- character
+- int
+- char
+- pointer
+- C++
+- technology
+tumblr_url: http://arjunsreedharan.org/post/78628168199/character-literal-is-not-a-character-in-c
+permalink: /post/78628168199/character-literal-is-not-a-character-in-c
+---
+<p>I was once writing program similar to the following. But i made a little mistake which led me to something interesting.</p>
+<pre class="prettyprint">#include &lt;stdio.h&gt;
+int main()
+{
+  char ch[256];
+  scanf("%s", ch);
+  if (ch == 'a') {
+    printf("Your sentence begins with %c.\n", *ch);
+  }
+  return 0;
+}
+</pre>
+<p>In this code; i am supposedly reading a string from <code>stdin</code>, checking if it begins with the character literal <code>'a'</code> and if it does, print something.<br/><br/> However, if you watch closely enough i missed an asterisk on line 7.<br/>It should have been <code>if (*ch == 'a') {</code></p>
+<p>Not noticing the bug i went on and compiled the code.<br/><br/> GCC threw the following warning:<br/><code>warning: comparison between pointer and integer</code><br/><br/><img alt="image" src="//static.tumblr.com/gltvynn/J4in62jiu/charint.png"/> Now i knew where to fix, but the warning caught my attention.</p>
+<p>It says i am trying to compare a <strong>pointer</strong> and an <strong>integer</strong>.<br/> But where does the <strong>integer</strong> come from?</p>
+<p>I am not using an integer anywhere in the code except for the return value of <code>main()</code>.</p>
+<p>In the line which throws the warning, i am comparing a pointer (<code>ch</code>) to a character literal (<code>'a'</code>).</p>
+<p><br/><br/><br/>A little bit of investigation around the web and i found out why.</p>
+<p>Before i tell you why, let me try to find the size of the character literal compared to that of an <code>int</code> and <code>char</code>.</p>
+<pre class="prettyprint">int main()
+{
+  printf("sizeof(char) %d\n", sizeof(char));
+  printf("sizeof(int) %d\n", sizeof(int));
+  printf("sizeof('a') %d\n", sizeof('a'));
+  return 0;
+}
+</pre>
+<p>Here&#8217;s the output:</p>
+<pre class="prettyprint">sizeof(char) 1
+sizeof(int) 4
+sizeof('a') 4
+</pre>
+<p>As you can see, the character literal doesn&#8217;t occupy the size of a <code>char</code>, it takes the size of an <code>int</code>.</p>
+<p>Here&#8217;s what the C standard says (§6.4.4.4):</p>
+<pre>    883 An integer character constant has type int.
+    
+    ...
+    
+    886 If an integer character constant contains a single
+    character or escape sequence, its value is the one that 
+    results when an object with type char whose value is that of 
+    the single character or escape sequence is converted to 
+    type int.
+</pre>
+<p><br/><br/></p>
+<p>Yes. In <strong>C</strong>, a character literal is an <code>int</code> not a <code>char</code>.</p>
+
+<p><strong>PS:</strong><br/>The same is not true for <strong>C++</strong>. see the screenshot below.<br/><img alt="image" src="//static.tumblr.com/gltvynn/ZTNn62jk5/candcc.png"/></p>
