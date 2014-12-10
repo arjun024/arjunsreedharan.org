@@ -1,0 +1,2 @@
+del tweets
+$("#e8 span").each(function(i){$(this).text()[1]=="@"?$($(this).parent().siblings()[1]).find("input").prop("checked",true):null})
