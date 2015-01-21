@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, int **argc)
+{
+	if (system("command -v grep") && system("command -v sed")) {
+		fprintf(stderr, "grep and sed are required");
+		_exit(EXIT_FAILURE);	
+	}
+	if (system("command -v grep")) {
+		fprintf(stderr, "grep is required");
+		_exit(EXIT_FAILURE);	
+	}
+	if (system("command -v sed")) {
+		fprintf(stderr, "sed is required");
+		_exit(EXIT_FAILURE);	
+	}
+
+	if(argc < 3) {
+		_exit(EXIT_FAILURE);
+	}
+}
